@@ -15,7 +15,6 @@ async function resetItems() {
 
 describe("items routes", () => {
   let app;
-  let server;
 
   beforeAll(async () => {
     process.env.NODE_ENV = "test";
@@ -28,44 +27,37 @@ describe("items routes", () => {
     delete require.cache[require.resolve("../src/routes/items")];
     delete require.cache[require.resolve("../src/index")];
     app = require("../src/index");
-    server = app.listen(0, "127.0.0.1");
   });
 
   afterAll(async () => {
     delete process.env.DATA_PATH;
   });
 
-  afterEach(async () => {
-    if (server) {
-      await new Promise((resolve) => server.close(resolve));
-    }
-  });
-
   test("GET /api/items returns all items", async () => {
-    const res = await request(server).get("/api/items").expect(200);
-    expect(res.body).toHaveLength(2);
-    expect(res.body[0].name).toBe("Alpha");
+    const res = await request(app).get("/api/items").expect(200);
+    expect(res.body.items).toHaveLength(2);
+    expect(res.body.items[0].name).toBe("Alpha");
   });
 
   test("GET /api/items supports search via q", async () => {
-    const res = await request(server).get("/api/items?q=be").expect(200);
-    expect(res.body).toHaveLength(1);
-    expect(res.body[0].id).toBe(2);
+    const res = await request(app).get("/api/items?q=be").expect(200);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0].id).toBe(2);
   });
 
   test("GET /api/items/:id returns item when present", async () => {
-    const res = await request(server).get("/api/items/1").expect(200);
+    const res = await request(app).get("/api/items/1").expect(200);
     expect(res.body).toMatchObject({ id: 1, name: "Alpha" });
   });
 
   test("GET /api/items/:id returns 404 for missing item", async () => {
-    const res = await request(server).get("/api/items/999").expect(404);
+    const res = await request(app).get("/api/items/999").expect(404);
     expect(res.body.message || res.body.error || res.text).toBeDefined();
   });
 
   test("POST /api/items creates and persists item", async () => {
     const newItem = { name: "Gamma", price: 30 };
-    const res = await request(server)
+    const res = await request(app)
       .post("/api/items")
       .send(newItem)
       .expect(201);
